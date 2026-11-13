@@ -1,0 +1,970 @@
+<Page
+    x:Class="GGMaps.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:GGMaps"
+    FontFamily="{StaticResource AppFont}"
+    Background="{ThemeResource PageBgBrush}">
+
+    <Page.Resources>
+        <local:PathDataConverter x:Key="PathData" />
+
+        <!-- Button without the WP8.1 chrome: content only, dims while pressed -->
+        <Style x:Key="BareButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="Root" Background="{TemplateBinding Background}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver" />
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="0.55" Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="0.4" Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource BareButton}">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="Icon24" TargetType="Path">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
+        </Style>
+
+        <Style x:Key="Icon20" TargetType="Path" BasedOn="{StaticResource Icon24}">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+        </Style>
+
+        <Style x:Key="Title" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource AppFontMedium}" />
+            <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="Body" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource ContentFont}" />
+            <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource AppFontMedium}" />
+            <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Margin" Value="16,20,16,8" />
+        </Style>
+
+        <Style x:Key="PlainListItem" TargetType="ListViewItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        </Style>
+
+        <Style x:Key="SettingsRadio" TargetType="RadioButton">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+            <Setter Property="Margin" Value="16,0" />
+        </Style>
+
+        <Style x:Key="SettingsCheck" TargetType="CheckBox">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+        </Style>
+
+        <!-- ============================================================ templates -->
+
+        <!-- search screen row -->
+        <DataTemplate x:Key="SuggestionTemplate">
+            <Grid Background="Transparent" MinHeight="64">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource SurfaceHighBrush}">
+                        <Path Data="{Binding IconData, Converter={StaticResource PathData}}" Style="{StaticResource Icon20}" />
+                    </Border>
+                    <TextBlock Text="{Binding DistanceText}" Visibility="{Binding DistanceVisibility}" FontSize="11" Foreground="{ThemeResource OnSurfaceVariantBrush}" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                </StackPanel>
+                <Border Grid.Column="1" Grid.ColumnSpan="2" BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,0,1" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,10,0,10">
+                    <TextBlock Text="{Binding MainText}" FontSize="16" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding SecondaryText}" Visibility="{Binding SecondaryVisibility}" Style="{StaticResource Body}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                </StackPanel>
+                <Button Grid.Column="2" Style="{StaticResource IconButton}" Visibility="{Binding FillVisibility}" Tag="{Binding}" Click="SuggestionFill_Click">
+                    <Path Data="M5 15h2V8.41L18.59 20 20 18.59 8.41 7H15V5H5z" Style="{StaticResource Icon20}" />
+                </Button>
+            </Grid>
+        </DataTemplate>
+
+        <!-- search result row in the sheet -->
+        <DataTemplate x:Key="ResultTemplate">
+            <Grid Background="Transparent">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid Margin="16,14,16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Title}" Style="{StaticResource Title}" />
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding RatingVisibility}" Margin="0,3,0,0">
+                            <TextBlock Text="{Binding RatingText}" Style="{StaticResource Body}" Margin="0,0,4,0" />
+                            <TextBlock Text="{Binding StarsText}" FontSize="13" Foreground="{ThemeResource StarBrush}" VerticalAlignment="Center" FontFamily="Segoe WP" />
+                            <TextBlock Text="{Binding RatingCountText}" Style="{StaticResource Body}" Margin="4,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding MetaLine}" Visibility="{Binding MetaVisibility}" Style="{StaticResource Body}" Margin="0,2,0,0" />
+                        <TextBlock Text="{Binding AddressLine}" Style="{StaticResource Body}" MaxLines="2" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding OpenVisibility}" Margin="0,2,0,0">
+                            <TextBlock Text="{Binding OpenStatus}" Foreground="{Binding OpenBrush}" FontSize="14" FontFamily="{StaticResource AppFontMedium}" />
+                            <TextBlock Text="{Binding OpenDetail}" Style="{StaticResource Body}" TextWrapping="NoWrap" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="84" Height="84" CornerRadius="10" Margin="12,2,0,0" VerticalAlignment="Top"
+                            Background="{ThemeResource SurfaceHighBrush}" Visibility="{Binding PhotoVisibility}">
+                        <Image Source="{Binding FirstPhotoUrl}" Stretch="UniformToFill" />
+                    </Border>
+                </Grid>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="16,10,16,14">
+                    <Button Style="{StaticResource BareButton}" Tag="{Binding}" Click="ResultDirections_Click">
+                        <Border CornerRadius="18" Height="36" Padding="14,0" Background="{ThemeResource PrimaryBrush}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"
+                                      Width="18" Height="18" Stretch="Uniform" Fill="{ThemeResource OnPrimaryBrush}" />
+                                <TextBlock Text="Đường đi" FontFamily="{StaticResource AppFontMedium}" FontSize="14" Foreground="{ThemeResource OnPrimaryBrush}" Margin="6,0,0,1" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Button>
+                </StackPanel>
+                <Border Grid.Row="1" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- route option in the directions sheet -->
+        <DataTemplate x:Key="RouteTemplate">
+            <Grid Background="Transparent">
+                <Grid Margin="16,12,16,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Route.DurationText}" Foreground="{Binding Route.DurationBrush}" FontSize="18" FontFamily="{StaticResource AppFontMedium}" />
+                            <TextBlock Text="{Binding DistanceInParens}" Style="{StaticResource Body}" FontSize="16" Margin="6,1,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Chips}" Visibility="{Binding ChipsVisibility}" Margin="0,6,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="›" Visibility="{Binding SeparatorVisibility}" Foreground="{ThemeResource OnSurfaceVariantBrush}" FontSize="16" Margin="4,0" VerticalAlignment="Center" />
+                                        <Path Data="{Binding IconData, Converter={StaticResource PathData}}" Width="18" Height="18" Stretch="Uniform" Fill="{ThemeResource OnSurfaceVariantBrush}" VerticalAlignment="Center" />
+                                        <Border Background="{Binding ChipBg}" CornerRadius="4" Padding="5,1,5,2" Margin="3,0,0,0" Visibility="{Binding ChipVisibility}" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ChipText}" Foreground="{Binding ChipFg}" FontSize="13" FontFamily="{StaticResource AppFontMedium}" />
+                                        </Border>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{Binding Route.Subtitle}" Visibility="{Binding Route.SubtitleVisibility}" Style="{StaticResource Body}" Margin="0,3,0,0" />
+                        <TextBlock Text="{Binding Route.ViaText}" Visibility="{Binding Route.ViaVisibility}" Style="{StaticResource Body}" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="10" Height="10" CornerRadius="5" Background="{ThemeResource PrimaryBrush}" Visibility="{Binding SelectedVisibility}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                </Grid>
+                <Border VerticalAlignment="Bottom" Height="1" Margin="16,0,0,0" Background="{ThemeResource DividerBrush}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- one row of the step list -->
+        <DataTemplate x:Key="StepTemplate">
+            <Grid Background="Transparent" MinHeight="60">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Path Data="{Binding IconData, Converter={StaticResource PathData}}" Width="24" Height="24" Stretch="Uniform" Fill="{Binding IconBrush}"
+                      VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                <StackPanel Grid.Column="1" Margin="0,14,16,14">
+                    <Border Background="{Binding ChipBg}" CornerRadius="4" Padding="6,1,6,2" HorizontalAlignment="Left" Margin="0,0,0,4" Visibility="{Binding ChipVisibility}">
+                        <TextBlock Text="{Binding ChipText}" Foreground="{Binding ChipFg}" FontSize="13" FontFamily="{StaticResource AppFontMedium}" />
+                    </Border>
+                    <TextBlock Text="{Binding Title}" FontSize="16" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Subtitle}" Visibility="{Binding SubtitleVisibility}" Style="{StaticResource Body}" Margin="0,3,0,0" />
+                    <TextBlock Text="{Binding Meta}" Visibility="{Binding MetaVisibility}" Style="{StaticResource Body}" FontSize="13" Margin="0,3,0,0" />
+                </StackPanel>
+                <Border Grid.Column="1" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+            </Grid>
+        </DataTemplate>
+
+        <Storyboard x:Name="ToastFadeInStoryboard">
+            <DoubleAnimation Storyboard.TargetName="ToastNotification" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.18" />
+        </Storyboard>
+        <Storyboard x:Name="ToastFadeOutStoryboard" Completed="ToastFadeOutStoryboard_Completed">
+            <DoubleAnimation Storyboard.TargetName="ToastNotification" Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.25" />
+        </Storyboard>
+    </Page.Resources>
+
+    <Grid x:Name="LayoutRoot" SizeChanged="LayoutRoot_SizeChanged">
+
+        <!-- ================================================================ MAP -->
+        <local:GMap x:Name="MapView" Background="#E8EAED" />
+
+        <!-- ================================================================ TOP CHROME (home / results / place) -->
+        <Grid x:Name="TopChrome" VerticalAlignment="Top" Canvas.ZIndex="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border x:Name="SearchBarBorder" Margin="12,8,12,0" Height="50" CornerRadius="25"
+                    Background="{ThemeResource FloatingBrush}" BorderBrush="{ThemeResource FloatingEdgeBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Width="48">
+                        <Path x:Name="SearchBarPin" Data="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                              Width="22" Height="22" Stretch="Uniform" Fill="{ThemeResource PinRedBrush}" Margin="6,0,0,0" />
+                        <Button x:Name="SearchBarBackButton" Style="{StaticResource IconButton}" Visibility="Collapsed" Click="SearchBarBack_Click">
+                            <Path Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" Style="{StaticResource Icon24}" Fill="{ThemeResource OnSurfaceBrush}" />
+                        </Button>
+                    </Grid>
+                    <Button Grid.Column="1" Style="{StaticResource BareButton}" Click="SearchBar_Click" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center">
+                        <TextBlock x:Name="SearchBarText" Text="Tìm kiếm tại đây" FontSize="17" Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                   FontFamily="{StaticResource ContentFont}" TextTrimming="CharacterEllipsis" Margin="4,0,0,2" />
+                    </Button>
+                    <Button x:Name="SearchBarMicButton" Grid.Column="2" Style="{StaticResource IconButton}" Width="44" Click="Mic_Click">
+                        <Path Data="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"
+                              Style="{StaticResource Icon24}" />
+                    </Button>
+                    <Button x:Name="SearchBarClearButton" Grid.Column="2" Style="{StaticResource IconButton}" Width="44" Visibility="Collapsed" Click="SearchBarClear_Click">
+                        <Path Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Style="{StaticResource Icon24}" />
+                    </Button>
+                    <Button x:Name="AvatarButton" Grid.Column="3" Style="{StaticResource IconButton}" Width="48" Click="Avatar_Click">
+                        <Border Width="32" Height="32" CornerRadius="16" Background="{ThemeResource PrimaryBrush}">
+                            <Path Data="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                                  Width="18" Height="18" Stretch="Uniform" Fill="{ThemeResource OnPrimaryBrush}" />
+                        </Border>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- category chips (home) -->
+            <ScrollViewer x:Name="ChipsScroller" Grid.Row="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                          HorizontalScrollMode="Enabled" VerticalScrollMode="Disabled" Margin="0,10,0,0">
+                <StackPanel x:Name="ChipsPanel" Orientation="Horizontal" Margin="12,0,4,0" />
+            </ScrollViewer>
+
+            <!-- right column: layers + compass -->
+            <StackPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,10,12,0">
+                <Button x:Name="LayersButton" Style="{StaticResource BareButton}" Click="Layers_Click">
+                    <Border Width="44" Height="44" CornerRadius="22" Background="{ThemeResource FloatingBrush}" BorderBrush="{ThemeResource FloatingEdgeBrush}" BorderThickness="1">
+                        <Path Data="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z" Style="{StaticResource Icon20}" />
+                    </Border>
+                </Button>
+                <Button x:Name="CompassButton" Style="{StaticResource BareButton}" Visibility="Collapsed" Margin="0,10,0,0" Click="Compass_Click">
+                    <Border Width="44" Height="44" CornerRadius="22" Background="{ThemeResource FloatingBrush}" BorderBrush="{ThemeResource FloatingEdgeBrush}" BorderThickness="1">
+                        <Grid Width="16" Height="30" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <RotateTransform x:Name="CompassRotate" />
+                            </Grid.RenderTransform>
+                            <Path Data="M8 0 L16 15 L0 15 Z" Fill="#EA4335" Stretch="Fill" Height="15" VerticalAlignment="Top" />
+                            <Path Data="M0 0 L16 0 L8 15 Z" Fill="{ThemeResource OutlineBrush}" Stretch="Fill" Height="15" VerticalAlignment="Bottom" />
+                        </Grid>
+                    </Border>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- "Tìm kiếm khu vực này" -->
+        <Button x:Name="SearchAreaButton" Style="{StaticResource BareButton}" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,124,0,0"
+                Visibility="Collapsed" Canvas.ZIndex="11" Click="SearchArea_Click">
+            <Border CornerRadius="18" Height="36" Padding="16,0" Background="{ThemeResource FloatingBrush}" BorderBrush="{ThemeResource FloatingEdgeBrush}" BorderThickness="1">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Path Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                          Width="16" Height="16" Stretch="Uniform" Fill="{ThemeResource PrimaryBrush}" />
+                    <TextBlock Text="Tìm kiếm khu vực này" FontFamily="{StaticResource AppFontMedium}" FontSize="14" Foreground="{ThemeResource PrimaryBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Button>
+
+        <!-- ================================================================ DIRECTIONS HEADER -->
+        <Border x:Name="DirectionsHeader" VerticalAlignment="Top" Background="{ThemeResource SurfaceBrush}" Visibility="Collapsed" Canvas.ZIndex="12"
+                BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <Grid Margin="0,6,4,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="48" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="DirBackButton" Style="{StaticResource IconButton}" VerticalAlignment="Top" Click="DirBack_Click">
+                        <Path Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" Style="{StaticResource Icon24}" Fill="{ThemeResource OnSurfaceBrush}" />
+                    </Button>
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="12" Height="12" Stroke="{ThemeResource OnSurfaceVariantBrush}" StrokeThickness="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="4,0,0,0" />
+                        <StackPanel Grid.RowSpan="2" Margin="9,26,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <Ellipse Width="3" Height="3" Fill="{ThemeResource OutlineBrush}" Margin="0,2" />
+                            <Ellipse Width="3" Height="3" Fill="{ThemeResource OutlineBrush}" Margin="0,2" />
+                            <Ellipse Width="3" Height="3" Fill="{ThemeResource OutlineBrush}" Margin="0,2" />
+                        </StackPanel>
+                        <Path Grid.Row="1" Data="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                              Width="18" Height="18" Stretch="Uniform" Fill="{ThemeResource PinRedBrush}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="1,0,0,0" />
+                        <Button x:Name="DirOriginButton" Grid.Column="1" Style="{StaticResource BareButton}" Margin="0,0,0,6" Click="DirOrigin_Click">
+                            <Border Height="40" CornerRadius="8" Background="{ThemeResource SurfaceHighBrush}" Padding="12,0">
+                                <TextBlock x:Name="DirOriginText" Text="Vị trí của bạn" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Border>
+                        </Button>
+                        <Button x:Name="DirDestButton" Grid.Row="1" Grid.Column="1" Style="{StaticResource BareButton}" Click="DirDest_Click">
+                            <Border Height="40" CornerRadius="8" Background="{ThemeResource SurfaceHighBrush}" Padding="12,0">
+                                <TextBlock x:Name="DirDestText" Text="Chọn điểm đến" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                    <StackPanel Grid.Column="2" Margin="4,0,0,0">
+                        <Button x:Name="DirMoreButton" Style="{StaticResource IconButton}" Height="46" Click="DirMore_Click">
+                            <Path Data="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" Style="{StaticResource Icon24}" />
+                        </Button>
+                        <Button x:Name="DirSwapButton" Style="{StaticResource IconButton}" Height="46" Click="DirSwap_Click">
+                            <Path Data="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z" Style="{StaticResource Icon24}" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+                <Grid x:Name="ModeTabsPanel" Margin="8,8,8,8" Height="54" />
+            </StackPanel>
+        </Border>
+
+        <!-- ================================================================ BOTTOM SHEET (+ floating buttons riding on top of it) -->
+        <!-- floating row: attribution (left), my-location + directions (right). FabTransform.Y = -(visible sheet height) -->
+            <Grid x:Name="FabRow" VerticalAlignment="Bottom" Margin="0,0,0,10" Canvas.ZIndex="19">
+                <Grid.RenderTransform>
+                    <TranslateTransform x:Name="FabTransform" />
+                </Grid.RenderTransform>
+                <StackPanel x:Name="AttributionPanel" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,0,120,0" IsHitTestVisible="False">
+                    <TextBlock x:Name="GoogleLogoText" Text="Google" FontFamily="{StaticResource AppFontMedium}" FontSize="17" Foreground="{ThemeResource AttributionBrush}" />
+                    <TextBlock x:Name="AttributionText" Text="" FontSize="10" Foreground="{ThemeResource AttributionBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,12,0">
+                    <Button x:Name="MyLocationButton" Style="{StaticResource BareButton}" HorizontalAlignment="Right" Click="MyLocation_Click">
+                        <Border Width="48" Height="48" CornerRadius="24" Background="{ThemeResource FloatingBrush}" BorderBrush="{ThemeResource FloatingEdgeBrush}" BorderThickness="1">
+                            <Path x:Name="MyLocationIcon" Data="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
+                                  Style="{StaticResource Icon24}" />
+                        </Border>
+                    </Button>
+                    <Button x:Name="DirectionsFab" Style="{StaticResource BareButton}" HorizontalAlignment="Right" Margin="0,12,0,0" Click="DirectionsFab_Click">
+                        <Border Width="56" Height="56" CornerRadius="28" Background="{ThemeResource PrimaryBrush}">
+                            <Path Data="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"
+                                  Width="26" Height="26" Stretch="Uniform" Fill="{ThemeResource OnPrimaryBrush}" />
+                        </Border>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <Border x:Name="SheetBody" VerticalAlignment="Bottom" Canvas.ZIndex="20" Background="{ThemeResource SurfaceBrush}" CornerRadius="16,16,0,0"
+                    BorderBrush="{ThemeResource FloatingEdgeBrush}" BorderThickness="1,1,1,0" Height="600">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="SheetTransform" Y="600" />
+                </Border.RenderTransform>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid x:Name="SheetHandle" Height="22" Background="Transparent" ManipulationMode="TranslateY"
+                          ManipulationStarted="Sheet_ManipulationStarted" ManipulationDelta="Sheet_ManipulationDelta" ManipulationCompleted="Sheet_ManipulationCompleted"
+                          Tapped="SheetHandle_Tapped">
+                        <Border Width="36" Height="5" CornerRadius="2.5" Background="{ThemeResource HandleBrush}" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- ===== RESULTS ===== -->
+                    <Grid x:Name="ResultsPanel" Grid.Row="1" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid x:Name="ResultsHeader" Background="Transparent" ManipulationMode="TranslateY"
+                              ManipulationStarted="Sheet_ManipulationStarted" ManipulationDelta="Sheet_ManipulationDelta" ManipulationCompleted="Sheet_ManipulationCompleted">
+                            <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" HorizontalScrollMode="Enabled" VerticalScrollMode="Disabled">
+                                <StackPanel Orientation="Horizontal" Margin="16,0,16,8">
+                                    <Button x:Name="FilterOpenButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="FilterOpen_Click">
+                                        <Border x:Name="FilterOpenBorder" CornerRadius="8" Height="34" Padding="12,0" BorderBrush="{ThemeResource OutlineVariantBrush}" BorderThickness="1">
+                                            <TextBlock x:Name="FilterOpenText" Text="Đang mở cửa" FontSize="14" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceVariantBrush}" VerticalAlignment="Center" />
+                                        </Border>
+                                    </Button>
+                                    <Button x:Name="FilterRatingButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="FilterRating_Click">
+                                        <Border x:Name="FilterRatingBorder" CornerRadius="8" Height="34" Padding="12,0" BorderBrush="{ThemeResource OutlineVariantBrush}" BorderThickness="1">
+                                            <TextBlock x:Name="FilterRatingText" Text="Xếp hạng 4.0+" FontSize="14" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceVariantBrush}" VerticalAlignment="Center" />
+                                        </Border>
+                                    </Button>
+                                    <Button x:Name="SortDistanceButton" Style="{StaticResource BareButton}" Click="SortDistance_Click">
+                                        <Border x:Name="SortDistanceBorder" CornerRadius="8" Height="34" Padding="12,0" BorderBrush="{ThemeResource OutlineVariantBrush}" BorderThickness="1">
+                                            <TextBlock x:Name="SortDistanceText" Text="Gần nhất" FontSize="14" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceVariantBrush}" VerticalAlignment="Center" />
+                                        </Border>
+                                    </Button>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                        <ListView x:Name="ResultsList" Grid.Row="1" SelectionMode="None" IsItemClickEnabled="True" ItemClick="ResultsList_ItemClick"
+                                  ItemTemplate="{StaticResource ResultTemplate}" ItemContainerStyle="{StaticResource PlainListItem}" />
+                        <TextBlock x:Name="ResultsEmptyText" Grid.Row="1" Text="Không có kết quả phù hợp với bộ lọc." Style="{StaticResource Body}" TextAlignment="Center" Margin="24,24,24,0" Visibility="Collapsed" />
+                    </Grid>
+
+                    <!-- ===== PLACE ===== -->
+                    <Grid x:Name="PlacePanel" Grid.Row="1" Visibility="Collapsed">
+                        <ScrollViewer x:Name="PlaceScroll" VerticalScrollBarVisibility="Hidden">
+                            <StackPanel Margin="0,0,0,40">
+                                <Grid x:Name="PlaceHeader" Background="Transparent" Margin="16,0,8,0" ManipulationMode="TranslateY"
+                                      ManipulationStarted="Sheet_ManipulationStarted" ManipulationDelta="Sheet_ManipulationDelta" ManipulationCompleted="Sheet_ManipulationCompleted">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock x:Name="PlaceTitle" Text="" FontSize="22" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceBrush}" TextWrapping="Wrap" />
+                                        <StackPanel x:Name="PlaceRatingPanel" Orientation="Horizontal" Margin="0,4,0,0">
+                                            <TextBlock x:Name="PlaceRatingText" Style="{StaticResource Body}" Margin="0,0,4,0" />
+                                            <TextBlock x:Name="PlaceStarsText" FontSize="13" Foreground="{ThemeResource StarBrush}" VerticalAlignment="Center" FontFamily="Segoe WP" />
+                                            <TextBlock x:Name="PlaceRatingCountText" Style="{StaticResource Body}" Margin="4,0,0,0" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="PlaceMetaText" Style="{StaticResource Body}" Margin="0,3,0,0" />
+                                        <StackPanel x:Name="PlaceOpenPanel" Orientation="Horizontal" Margin="0,3,0,0">
+                                            <TextBlock x:Name="PlaceOpenStatus" FontSize="14" FontFamily="{StaticResource AppFontMedium}" />
+                                            <TextBlock x:Name="PlaceOpenDetail" Style="{StaticResource Body}" TextWrapping="NoWrap" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button x:Name="PlaceShareButton" Grid.Column="1" Style="{StaticResource IconButton}" Width="42" VerticalAlignment="Top" Click="PlaceShare_Click">
+                                        <Border Width="34" Height="34" CornerRadius="17" Background="{ThemeResource SurfaceHighBrush}">
+                                            <Path Data="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"
+                                                  Width="16" Height="16" Stretch="Uniform" Fill="{ThemeResource OnSurfaceVariantBrush}" />
+                                        </Border>
+                                    </Button>
+                                    <Button x:Name="PlaceCloseButton" Grid.Column="2" Style="{StaticResource IconButton}" Width="42" VerticalAlignment="Top" Click="PlaceClose_Click">
+                                        <Border Width="34" Height="34" CornerRadius="17" Background="{ThemeResource SurfaceHighBrush}">
+                                            <Path Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                  Width="14" Height="14" Stretch="Uniform" Fill="{ThemeResource OnSurfaceVariantBrush}" />
+                                        </Border>
+                                    </Button>
+                                </Grid>
+
+                                <!-- action pills -->
+                                <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" HorizontalScrollMode="Enabled" VerticalScrollMode="Disabled" Margin="0,14,0,0">
+                                    <StackPanel Orientation="Horizontal" Margin="16,0,16,0">
+                                        <Button x:Name="PlaceDirectionsButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="PlaceDirections_Click">
+                                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryBrush}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Data="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"
+                                                          Width="18" Height="18" Stretch="Uniform" Fill="{ThemeResource OnPrimaryBrush}" />
+                                                    <TextBlock Text="Đường đi" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                        <Button x:Name="PlaceCallButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="PlaceCall_Click">
+                                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Data="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"
+                                                          Width="16" Height="16" Stretch="Uniform" Fill="{ThemeResource OnPrimaryContainerBrush}" />
+                                                    <TextBlock Text="Gọi" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryContainerBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                        <Button x:Name="PlaceWebsiteButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="PlaceWebsite_Click">
+                                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                                                          Width="16" Height="16" Stretch="Uniform" Fill="{ThemeResource OnPrimaryContainerBrush}" />
+                                                    <TextBlock Text="Trang web" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryContainerBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                        <Button x:Name="PlaceSetDefaultButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="PlaceSetDefault_Click">
+                                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Data="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" Width="16" Height="16" Stretch="Uniform" Fill="{ThemeResource OnPrimaryContainerBrush}" />
+                                                    <TextBlock Text="Đặt làm mặc định" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryContainerBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                        <Button x:Name="PlaceShareActionButton" Style="{StaticResource BareButton}" Click="PlaceShare_Click">
+                                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Data="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"
+                                                          Width="16" Height="16" Stretch="Uniform" Fill="{ThemeResource OnPrimaryContainerBrush}" />
+                                                    <TextBlock Text="Chia sẻ" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryContainerBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                    </StackPanel>
+                                </ScrollViewer>
+
+                                <!-- photos -->
+                                <ScrollViewer x:Name="PlacePhotosScroller" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" HorizontalScrollMode="Enabled" VerticalScrollMode="Disabled" Margin="0,16,0,0">
+                                    <StackPanel x:Name="PlacePhotosPanel" Orientation="Horizontal" Margin="16,0,8,0" />
+                                </ScrollViewer>
+
+                                <ProgressRing x:Name="PlaceLoading" IsActive="False" Visibility="Collapsed" Width="32" Height="32" Margin="0,24,0,0" Foreground="{ThemeResource PrimaryBrush}" />
+                                <TextBlock x:Name="PlaceErrorText" Style="{StaticResource Body}" TextAlignment="Center" Margin="24,20,24,0" Visibility="Collapsed" />
+
+                                <!-- tabs -->
+                                <Grid x:Name="PlaceTabs" Margin="0,16,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.ColumnSpan="3" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+                                    <Button x:Name="TabOverviewButton" Style="{StaticResource BareButton}" Tag="0" Click="PlaceTab_Click">
+                                        <Grid Height="44">
+                                            <TextBlock x:Name="TabOverviewText" Text="Tổng quan" FontSize="15" FontFamily="{StaticResource AppFontMedium}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Border x:Name="TabOverviewLine" Height="3" CornerRadius="1.5" Background="{ThemeResource PrimaryBrush}" VerticalAlignment="Bottom" Margin="24,0" />
+                                        </Grid>
+                                    </Button>
+                                    <Button x:Name="TabReviewsButton" Grid.Column="1" Style="{StaticResource BareButton}" Tag="1" Click="PlaceTab_Click">
+                                        <Grid Height="44">
+                                            <TextBlock x:Name="TabReviewsText" Text="Đánh giá" FontSize="15" FontFamily="{StaticResource AppFontMedium}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Border x:Name="TabReviewsLine" Height="3" CornerRadius="1.5" Background="{ThemeResource PrimaryBrush}" VerticalAlignment="Bottom" Margin="24,0" />
+                                        </Grid>
+                                    </Button>
+                                    <Button x:Name="TabAboutButton" Grid.Column="2" Style="{StaticResource BareButton}" Tag="2" Click="PlaceTab_Click">
+                                        <Grid Height="44">
+                                            <TextBlock x:Name="TabAboutText" Text="Giới thiệu" FontSize="15" FontFamily="{StaticResource AppFontMedium}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Border x:Name="TabAboutLine" Height="3" CornerRadius="1.5" Background="{ThemeResource PrimaryBrush}" VerticalAlignment="Bottom" Margin="24,0" />
+                                        </Grid>
+                                    </Button>
+                                </Grid>
+
+                                <!-- overview -->
+                                <StackPanel x:Name="OverviewPanel">
+                                    <Button x:Name="AddressRow" Style="{StaticResource BareButton}" Click="AddressRow_Click">
+                                        <Grid MinHeight="56">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="56" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Path Data="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" Style="{StaticResource Icon24}" Fill="{ThemeResource PrimaryBrush}" />
+                                            <TextBlock x:Name="AddressText" Grid.Column="1" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,12,16,12" />
+                                            <Border Grid.Column="1" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+                                        </Grid>
+                                    </Button>
+                                    <Button x:Name="HoursRow" Style="{StaticResource BareButton}" Click="HoursRow_Click">
+                                        <Grid MinHeight="56">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="56" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Path Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" Style="{StaticResource Icon24}" Fill="{ThemeResource PrimaryBrush}" VerticalAlignment="Top" Margin="0,16,0,0" />
+                                            <StackPanel Grid.Column="1" Margin="0,16,0,14">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock x:Name="HoursStatusText" FontSize="15" FontFamily="{StaticResource AppFontMedium}" />
+                                                    <TextBlock x:Name="HoursDetailText" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" />
+                                                </StackPanel>
+                                                <StackPanel x:Name="HoursList" Visibility="Collapsed" Margin="0,8,0,0" />
+                                            </StackPanel>
+                                            <Path x:Name="HoursChevron" Grid.Column="2" Data="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z" Style="{StaticResource Icon24}" VerticalAlignment="Top" Margin="0,14,16,0" />
+                                            <Border Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+                                        </Grid>
+                                    </Button>
+                                    <Button x:Name="WebsiteRow" Style="{StaticResource BareButton}" Click="PlaceWebsite_Click">
+                                        <Grid MinHeight="56">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="56" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Path Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.930 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.080-.8 3.97-2.1 5.39z" Style="{StaticResource Icon24}" Fill="{ThemeResource PrimaryBrush}" />
+                                            <TextBlock x:Name="WebsiteText" Grid.Column="1" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,12,16,12" />
+                                            <Border Grid.Column="1" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+                                        </Grid>
+                                    </Button>
+                                    <Button x:Name="PhoneRow" Style="{StaticResource BareButton}" Click="PlaceCall_Click">
+                                        <Grid MinHeight="56">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="56" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Path Data="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.830-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" Style="{StaticResource Icon24}" Fill="{ThemeResource PrimaryBrush}" />
+                                            <TextBlock x:Name="PhoneText" Grid.Column="1" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" VerticalAlignment="Center" Margin="0,12,16,12" />
+                                            <Border Grid.Column="1" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+                                        </Grid>
+                                    </Button>
+                                    <Grid x:Name="PlusCodeRow" MinHeight="56">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="56" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Path Data="M5 9h2V7h2V5H5v4zm0 6H3v6h6v-2H5v-4zm14 4h-4v2h6v-6h-2v4zM15 3v2h4v4h2V3h-6zm-3 6c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" Style="{StaticResource Icon24}" Fill="{ThemeResource PrimaryBrush}" />
+                                        <TextBlock x:Name="PlusCodeText" Grid.Column="1" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" TextWrapping="Wrap" IsTextSelectionEnabled="True" VerticalAlignment="Center" Margin="0,12,16,12" />
+                                        <Border Grid.Column="1" VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+                                    </Grid>
+                                    <TextBlock Text="Dữ liệu địa điểm từ Google" Style="{StaticResource Body}" FontSize="12" Margin="56,12,16,0" />
+                                </StackPanel>
+
+                                <!-- reviews -->
+                                <StackPanel x:Name="ReviewsPanel" Visibility="Collapsed">
+                                    <Grid Margin="16,16,16,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="ReviewsBigRating" FontSize="44" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceBrush}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="14,0,0,0">
+                                            <TextBlock x:Name="ReviewsStars" FontSize="18" Foreground="{ThemeResource StarBrush}" FontFamily="Segoe WP" />
+                                            <TextBlock x:Name="ReviewsCount" Style="{StaticResource Body}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <ItemsControl x:Name="ReviewsList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="16,12,16,12">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Width="34" Height="34" CornerRadius="17" Background="{ThemeResource PrimaryContainerBrush}">
+                                                            <Grid>
+                                                                <TextBlock Text="{Binding Initial}" FontFamily="{StaticResource AppFontMedium}" FontSize="16" Foreground="{ThemeResource OnPrimaryContainerBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                <Ellipse Width="34" Height="34">
+                                                                    <Ellipse.Fill>
+                                                                        <ImageBrush ImageSource="{Binding AuthorPhoto}" Stretch="UniformToFill" />
+                                                                    </Ellipse.Fill>
+                                                                </Ellipse>
+                                                            </Grid>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Author}" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <TextBlock Text="{Binding Stars}" FontSize="13" Foreground="{ThemeResource StarBrush}" FontFamily="Segoe WP" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding When}" Style="{StaticResource Body}" FontSize="13" Margin="8,0,0,0" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Text}" Visibility="{Binding TextVisibility}" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="NoReviewsText" Text="Chưa có bài đánh giá." Style="{StaticResource Body}" Margin="16,12,16,0" Visibility="Collapsed" />
+                                    <TextBlock Text="Bài đánh giá từ Google. Hiển thị tối đa 5 bài liên quan nhất." Style="{StaticResource Body}" FontSize="12" Margin="16,12,16,0" />
+                                </StackPanel>
+
+                                <!-- about -->
+                                <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
+                                    <TextBlock x:Name="AboutText" FontSize="15" Foreground="{ThemeResource OnSurfaceBrush}" FontFamily="{StaticResource ContentFont}" TextWrapping="Wrap" Margin="16,16,16,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- ===== DIRECTIONS ===== -->
+                    <Grid x:Name="DirectionsPanel" Grid.Row="1" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid x:Name="DirSummary" Background="Transparent" ManipulationMode="TranslateY"
+                              ManipulationStarted="Sheet_ManipulationStarted" ManipulationDelta="Sheet_ManipulationDelta" ManipulationCompleted="Sheet_ManipulationCompleted">
+                            <StackPanel Margin="16,0,16,12">
+                                <StackPanel x:Name="DirSummaryInfo">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="DirDurationText" FontSize="22" FontFamily="{StaticResource AppFontMedium}" />
+                                        <TextBlock x:Name="DirDistanceText" Style="{StaticResource Body}" FontSize="18" Margin="8,0,0,0" VerticalAlignment="Bottom" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="DirSubtitleText" Style="{StaticResource Body}" Margin="0,4,0,0" />
+                                    <TextBlock x:Name="DirWarningText" Style="{StaticResource Body}" FontSize="13" Margin="0,4,0,0" Visibility="Collapsed" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                        <Button x:Name="DirStepsButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="DirSteps_Click">
+                                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryBrush}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Data="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" Width="18" Height="18" Stretch="Uniform" Fill="{ThemeResource OnPrimaryBrush}" />
+                                                    <TextBlock Text="Các bước" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                        <Button x:Name="DirShareButton" Style="{StaticResource BareButton}" Click="DirShare_Click">
+                                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Path Data="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z" Width="16" Height="16" Stretch="Uniform" Fill="{ThemeResource OnPrimaryContainerBrush}" />
+                                                    <TextBlock Text="Chia sẻ" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryContainerBrush}" Margin="8,0,0,1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel x:Name="DirStatusPanel" Orientation="Horizontal" Visibility="Collapsed" Margin="0,4,0,4">
+                                    <ProgressRing x:Name="DirLoading" IsActive="False" Width="24" Height="24" Foreground="{ThemeResource PrimaryBrush}" Margin="0,0,10,0" />
+                                    <TextBlock x:Name="DirStatusText" Style="{StaticResource Body}" FontSize="15" VerticalAlignment="Center" MaxWidth="320" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Border VerticalAlignment="Bottom" Height="1" Background="{ThemeResource DividerBrush}" />
+                        </Grid>
+                        <ListView x:Name="DirRoutesList" Grid.Row="1" SelectionMode="None" IsItemClickEnabled="True" ItemClick="DirRoutesList_ItemClick"
+                                  ItemTemplate="{StaticResource RouteTemplate}" ItemContainerStyle="{StaticResource PlainListItem}" />
+                    </Grid>
+                </Grid>
+            </Border>
+
+        <!-- ================================================================ SEARCH SCREEN -->
+        <Grid x:Name="SearchScreen" Background="{ThemeResource SurfaceBrush}" Visibility="Collapsed" Canvas.ZIndex="100">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Margin="4,6,4,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="SearchBackButton" Style="{StaticResource IconButton}" Click="SearchBack_Click">
+                    <Path Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" Style="{StaticResource Icon24}" Fill="{ThemeResource OnSurfaceBrush}" />
+                </Button>
+                <TextBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="Tìm kiếm tại đây" FontSize="17" FontFamily="{StaticResource ContentFont}"
+                         BorderThickness="0" Background="Transparent" VerticalAlignment="Center" Margin="0" InputScope="Search"
+                         TextChanged="SearchBox_TextChanged" KeyDown="SearchBox_KeyDown" />
+                <Button x:Name="SearchClearButton" Grid.Column="2" Style="{StaticResource IconButton}" Visibility="Collapsed" Click="SearchClear_Click">
+                    <Path Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Style="{StaticResource Icon24}" />
+                </Button>
+                <Button x:Name="SearchMicButton" Grid.Column="2" Style="{StaticResource IconButton}" Click="Mic_Click">
+                    <Path Data="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" Style="{StaticResource Icon24}" />
+                </Button>
+            </Grid>
+            <ProgressBar x:Name="SearchProgress" Grid.Row="1" IsIndeterminate="True" Visibility="Collapsed" VerticalAlignment="Top" Margin="0" />
+            <Border Grid.Row="1" Height="1" Background="{ThemeResource DividerBrush}" VerticalAlignment="Bottom" />
+            <StackPanel Grid.Row="1" Margin="0,0,0,0">
+                <TextBlock x:Name="SearchHeaderText" Text="Gần đây" Style="{StaticResource SectionTitle}" Margin="16,14,16,4" />
+            </StackPanel>
+            <ListView x:Name="SuggestionList" Grid.Row="2" SelectionMode="None" IsItemClickEnabled="True" ItemClick="SuggestionList_ItemClick"
+                      ItemTemplate="{StaticResource SuggestionTemplate}" ItemContainerStyle="{StaticResource PlainListItem}" />
+            <TextBlock x:Name="SearchEmptyText" Grid.Row="2" Text="" Style="{StaticResource Body}" TextAlignment="Center" Margin="24,32,24,0" Visibility="Collapsed" />
+        </Grid>
+
+        <!-- ================================================================ STEPS SCREEN -->
+        <Grid x:Name="StepsScreen" Background="{ThemeResource SurfaceBrush}" Visibility="Collapsed" Canvas.ZIndex="110">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Border BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="4,6,16,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="StepsBackButton" Style="{StaticResource IconButton}" VerticalAlignment="Top" Click="StepsBack_Click">
+                        <Path Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" Style="{StaticResource Icon24}" Fill="{ThemeResource OnSurfaceBrush}" />
+                    </Button>
+                    <StackPanel Grid.Column="1" Margin="4,8,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="StepsDuration" FontSize="22" FontFamily="{StaticResource AppFontMedium}" />
+                            <TextBlock x:Name="StepsDistance" Style="{StaticResource Body}" FontSize="18" Margin="8,0,0,0" VerticalAlignment="Bottom" />
+                        </StackPanel>
+                        <TextBlock x:Name="StepsVia" Style="{StaticResource Body}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <ListView x:Name="StepsList" Grid.Row="1" SelectionMode="None" IsItemClickEnabled="True" ItemClick="StepsList_ItemClick"
+                      ItemTemplate="{StaticResource StepTemplate}" ItemContainerStyle="{StaticResource PlainListItem}" />
+        </Grid>
+
+        <!-- ================================================================ LAYERS SHEET -->
+        <Grid x:Name="LayersOverlay" Background="{ThemeResource ScrimBrush}" Visibility="Collapsed" Canvas.ZIndex="200" Tapped="LayersScrim_Tapped">
+            <Border Background="{ThemeResource SurfaceBrush}" CornerRadius="16,16,0,0" VerticalAlignment="Bottom" Tapped="OverlayCard_Tapped">
+                <StackPanel Margin="0,0,0,24">
+                    <Grid Margin="16,12,4,0">
+                        <TextBlock Text="Loại bản đồ" FontSize="18" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceBrush}" VerticalAlignment="Center" />
+                        <Button x:Name="LayersCloseButton" Style="{StaticResource IconButton}" HorizontalAlignment="Right" Click="LayersClose_Click">
+                            <Border Width="32" Height="32" CornerRadius="16" Background="{ThemeResource SurfaceHighBrush}">
+                                <Path Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="14" Height="14" Stretch="Uniform" Fill="{ThemeResource OnSurfaceVariantBrush}" />
+                            </Border>
+                        </Button>
+                    </Grid>
+                    <Grid x:Name="MapTypeGrid" Margin="8,8,8,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                    <TextBlock Text="Chi tiết bản đồ" FontSize="18" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceBrush}" Margin="16,20,16,0" />
+                    <Grid x:Name="MapDetailGrid" Margin="8,8,8,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ================================================================ ROUTE OPTIONS -->
+        <Grid x:Name="RouteOptionsOverlay" Background="{ThemeResource ScrimBrush}" Visibility="Collapsed" Canvas.ZIndex="210" Tapped="RouteOptionsScrim_Tapped">
+            <Border Background="{ThemeResource SurfaceBrush}" CornerRadius="16,16,0,0" VerticalAlignment="Bottom" Tapped="OverlayCard_Tapped">
+                <StackPanel Margin="16,16,16,16">
+                    <TextBlock Text="Tuỳ chọn tuyến đường" FontSize="18" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceBrush}" Margin="0,0,0,8" />
+                    <TextBlock Text="Áp dụng cho ô tô và xe máy." Style="{StaticResource Body}" Margin="0,0,0,4" />
+                    <CheckBox x:Name="AvoidHighwaysCheck" Content="Tránh đường cao tốc" Style="{StaticResource SettingsCheck}" />
+                    <CheckBox x:Name="AvoidTollsCheck" Content="Tránh đường có thu phí" Style="{StaticResource SettingsCheck}" />
+                    <CheckBox x:Name="AvoidFerriesCheck" Content="Tránh phà" Style="{StaticResource SettingsCheck}" />
+                    <Button x:Name="RouteOptionsDoneButton" Style="{StaticResource BareButton}" HorizontalAlignment="Right" Margin="0,8,0,0" Click="RouteOptionsDone_Click">
+                        <Border CornerRadius="20" Height="40" Padding="24,0" Background="{ThemeResource PrimaryBrush}">
+                            <TextBlock Text="Xong" FontFamily="{StaticResource AppFontMedium}" FontSize="15" Foreground="{ThemeResource OnPrimaryBrush}" VerticalAlignment="Center" />
+                        </Border>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ================================================================ SETTINGS -->
+        <Grid x:Name="SettingsScreen" Background="{ThemeResource SurfaceBrush}" Visibility="Collapsed" Canvas.ZIndex="300">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Border BorderBrush="{ThemeResource DividerBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="4,6,4,6">
+                    <Button x:Name="SettingsBackButton" Style="{StaticResource IconButton}" HorizontalAlignment="Left" Click="SettingsBack_Click">
+                        <Path Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" Style="{StaticResource Icon24}" Fill="{ThemeResource OnSurfaceBrush}" />
+                    </Button>
+                    <TextBlock Text="Cài đặt" FontSize="20" FontFamily="{StaticResource AppFontMedium}" Foreground="{ThemeResource OnSurfaceBrush}" VerticalAlignment="Center" Margin="56,0,0,0" />
+                </Grid>
+            </Border>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,0,40">
+                    <TextBlock Text="Nguồn dữ liệu" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Style="{StaticResource Body}" FontSize="13" Margin="16,0,16,0">
+                        <Run Text="Bản đồ, tìm kiếm, thông tin địa điểm và chỉ đường ô tô / đi bộ / xe buýt lấy trực tiếp từ Google Maps (giống bản web), không cần khoá API, không tốn phí." />
+                        <LineBreak /><Run Text="Chỉ đường xe máy và xe đạp dùng máy chủ Valhalla của cộng đồng OpenStreetMap, vì Google Maps bản web không có hai chế độ này ở Việt Nam." />
+                        <LineBreak /><Run Text="Nếu dùng quá nhiều, Google có thể tạm chặn mạng của bạn vài phút." />
+                    </TextBlock>
+
+                    <TextBlock Text="Địa chỉ mặc định" Style="{StaticResource SectionTitle}" />
+                    <TextBlock x:Name="MyLocationText" Style="{StaticResource Body}" Margin="16,0,16,0" />
+                    <TextBlock Text="Ứng dụng không dùng GPS. Địa chỉ mặc định là điểm xuất phát khi chỉ đường, vị trí chấm xanh và nơi được ưu tiên khi tìm kiếm. Có thể đặt bằng nút &quot;Đặt làm mặc định&quot; trong thẻ của một địa điểm (kể cả ghim thả tay), hoặc nút bên dưới." Style="{StaticResource Body}" FontSize="13" Margin="16,4,16,0" />
+                    <StackPanel Orientation="Horizontal" Margin="16,10,16,0">
+                        <Button x:Name="SetMyLocationButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="SetMyLocation_Click">
+                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                <TextBlock Text="Chọn địa chỉ…" FontFamily="{StaticResource AppFontMedium}" FontSize="14" Foreground="{ThemeResource OnPrimaryContainerBrush}" VerticalAlignment="Center" />
+                            </Border>
+                        </Button>
+                        <Button x:Name="ResetMyLocationButton" Style="{StaticResource BareButton}" Click="ResetMyLocation_Click">
+                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                <TextBlock Text="Xoá" FontFamily="{StaticResource AppFontMedium}" FontSize="14" Foreground="{ThemeResource OnPrimaryContainerBrush}" VerticalAlignment="Center" />
+                            </Border>
+                        </Button>
+                    </StackPanel>
+
+                    <TextBlock Text="Bản đồ" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="Cỡ chữ trên bản đồ" Style="{StaticResource Body}" Margin="16,0,16,0" />
+                    <RadioButton x:Name="LabelNormalRadio" GroupName="LabelScale" Content="Thường" Style="{StaticResource SettingsRadio}" Checked="LabelScale_Checked" />
+                    <RadioButton x:Name="LabelLargeRadio" GroupName="LabelScale" Content="Lớn (khuyên dùng cho màn hình HD)" Style="{StaticResource SettingsRadio}" Checked="LabelScale_Checked" />
+
+                    <TextBlock Text="Giao diện" Style="{StaticResource SectionTitle}" />
+                    <RadioButton x:Name="ThemeLightRadio" GroupName="Theme" Content="Sáng" Style="{StaticResource SettingsRadio}" Checked="Theme_Checked" />
+                    <RadioButton x:Name="ThemeDarkRadio" GroupName="Theme" Content="Tối (bản đồ tối)" Style="{StaticResource SettingsRadio}" Checked="Theme_Checked" />
+                    <RadioButton x:Name="ThemeSystemRadio" GroupName="Theme" Content="Theo hệ thống" Style="{StaticResource SettingsRadio}" Checked="Theme_Checked" />
+                    <TextBlock x:Name="ThemeNote" Text="Khởi động lại ứng dụng để áp dụng giao diện mới." Style="{StaticResource Body}" FontSize="13" Margin="16,0,16,0" Visibility="Collapsed" />
+
+                    <TextBlock Text="Dữ liệu" Style="{StaticResource SectionTitle}" />
+                    <StackPanel Orientation="Horizontal" Margin="16,0,16,0">
+                        <Button x:Name="ClearHistoryButton" Style="{StaticResource BareButton}" Margin="0,0,8,0" Click="ClearHistory_Click">
+                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                <TextBlock Text="Xoá lịch sử tìm kiếm" FontFamily="{StaticResource AppFontMedium}" FontSize="14" Foreground="{ThemeResource OnPrimaryContainerBrush}" VerticalAlignment="Center" />
+                            </Border>
+                        </Button>
+                        <Button x:Name="ClearSessionsButton" Style="{StaticResource BareButton}" Click="ClearSessions_Click">
+                            <Border CornerRadius="20" Height="40" Padding="16,0" Background="{ThemeResource PrimaryContainerBrush}">
+                                <TextBlock Text="Tải lại bản đồ" FontFamily="{StaticResource AppFontMedium}" FontSize="14" Foreground="{ThemeResource OnPrimaryContainerBrush}" VerticalAlignment="Center" />
+                            </Border>
+                        </Button>
+                    </StackPanel>
+
+                    <TextBlock Text="Giới thiệu" Style="{StaticResource SectionTitle}" />
+                    <TextBlock x:Name="VersionText" Style="{StaticResource Body}" Margin="16,0,16,0" />
+                    <TextBlock Style="{StaticResource Body}" FontSize="13" Margin="16,8,16,0"
+                               Text="Bản đồ, địa điểm và tuyến đường ô tô / đi bộ / xe buýt lấy từ Google Maps; tuyến xe máy / xe đạp từ OpenStreetMap (Valhalla, © OpenStreetMap contributors). Ứng dụng không chính thức. &quot;Google&quot; và &quot;Google Maps&quot; là nhãn hiệu của Google LLC. Dự án này không liên kết với Google. Chỉ hiển thị tuyến đường và danh sách các bước, không dẫn đường theo thời gian thực." />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ================================================================ PHOTO VIEWER -->
+        <Grid x:Name="PhotoViewer" Background="Black" Visibility="Collapsed" Canvas.ZIndex="400">
+            <FlipView x:Name="PhotoFlip" Background="Black" SelectionChanged="PhotoFlip_SelectionChanged">
+                <FlipView.ItemTemplate>
+                    <DataTemplate>
+                        <Image Source="{Binding LargeUrl}" Stretch="Uniform" />
+                    </DataTemplate>
+                </FlipView.ItemTemplate>
+            </FlipView>
+            <Button x:Name="PhotoCloseButton" Style="{StaticResource IconButton}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="4,4,0,0" Click="PhotoClose_Click">
+                <Path Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" Style="{StaticResource Icon24}" Fill="White" />
+            </Button>
+            <TextBlock x:Name="PhotoAuthorText" Foreground="White" FontSize="13" VerticalAlignment="Bottom" Margin="16,0,16,16" TextWrapping="Wrap" />
+        </Grid>
+
+        <!-- ================================================================ BUSY + TOAST -->
+        <ProgressBar x:Name="BusyBar" IsIndeterminate="True" VerticalAlignment="Top" Visibility="Collapsed" Canvas.ZIndex="650" IsHitTestVisible="False" />
+
+        <Border x:Name="ToastNotification" Background="{ThemeResource SnackbarBgBrush}" CornerRadius="8" Padding="16,12" Margin="16,0,16,24"
+                HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Visibility="Collapsed" Opacity="0" Canvas.ZIndex="700" IsHitTestVisible="False">
+            <TextBlock x:Name="ToastText" Text="" Foreground="{ThemeResource SnackbarTextBrush}" FontSize="14" TextWrapping="Wrap" />
+        </Border>
+    </Grid>
+</Page>
