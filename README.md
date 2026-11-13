@@ -12,13 +12,13 @@
 
 | Phiên bản | Kiến trúc | Tải về |
 |---|---|---|
-| **1.0.1.0** | ARM (Lumia 1020 và các máy Windows Phone 8.1 khác) | [GGMaps_1.0.1.0_ARM.appx](https://github.com/Hoangxee/ggMaps/raw/main/releases/GGMaps_1.0.1.0_ARM.appx) |
+| **1.0.4.0** | ARM (Lumia 1020 và các máy Windows Phone 8.1 khác) | [GGMaps_1.0.4.0_ARM.appx](https://github.com/Hoangxee/ggMaps/raw/main/releases/GGMaps_1.0.4.0_ARM.appx) |
 
 Gói `.appx` chưa ký, dùng để cài thử (sideload) lên máy đã mở khoá developer (hoặc interop unlock):
 1. Cắm điện thoại vào máy tính qua USB và **mở khoá màn hình**.
 2. Mở **Windows Phone Application Deployment 8.1** (đi kèm Windows Phone SDK), chọn thiết bị **Device**, chọn tệp `.appx` vừa tải rồi bấm **Deploy**. Hoặc dùng dòng lệnh:
    ```powershell
-   & "${env:ProgramFiles(x86)}\Microsoft SDKs\Windows Phone\v8.1\Tools\AppDeploy\AppDeployCmd.exe" /install GGMaps_1.0.1.0_ARM.appx /targetdevice:de
+   & "${env:ProgramFiles(x86)}\Microsoft SDKs\Windows Phone\v8.1\Tools\AppDeploy\AppDeployCmd.exe" /install GGMaps_1.0.4.0_ARM.appx /targetdevice:de
    ```
 3. Điện thoại phải có kết nối Internet (Wi-Fi / 4G). Cáp USB chỉ dùng để cài, không chia sẻ mạng.
 4. Mở **GG Maps** → tìm địa chỉ nhà / nơi hay xuất phát → mở địa điểm → **Đặt làm mặc định** (xem [Địa chỉ mặc định](#địa-chỉ-mặc-định-thay-cho-gps)).
@@ -47,7 +47,7 @@ Gói `.appx` chưa ký, dùng để cài thử (sideload) lên máy đã mở kh
 
 ### Chỉ đường
 - Điểm xuất phát mặc định là **địa chỉ mặc định**, nút đảo chiều, chọn điểm đi / đến từ màn hình tìm kiếm.
-- Phương tiện: **Xe máy** (mở sẵn), **Ô tô**, **Phương tiện công cộng**, **Đi bộ**, **Xe đạp**; thời gian hiện dưới biểu tượng của các phương tiện đã tính.
+- Phương tiện: **Xe máy** (mở sẵn), **Ô tô**, **Phương tiện công cộng**, **Đi bộ**, **Xe đạp** (hàng biểu tượng gọn, chừa nhiều chỗ cho bản đồ); thời gian và quãng đường của tuyến đang chọn nằm trên một dòng ở sheet phía dưới, kèm nút Các bước / Chia sẻ.
 - Nhiều tuyến cùng lúc trên bản đồ (tuyến chọn màu xanh, tuyến khác màu xám, nhãn thời gian chạm để chọn); ô tô có thời gian theo tình trạng giao thông.
 - Danh sách tuyến: thời gian, quãng đường, "Qua …"; xe buýt: giờ đi / đến, tần suất, giá vé, chuỗi tuyến xe.
 - Màn hình **Các bước**: biểu tượng rẽ, chỉ dẫn, quãng đường; xe buýt: số tuyến, hướng, điểm lên / xuống kèm giờ, số điểm dừng. Chạm một bước để xem đoạn đó trên bản đồ.

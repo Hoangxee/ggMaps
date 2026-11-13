@@ -78,47 +78,58 @@ namespace GGMaps
                 List<RouteInfo> cached;
                 string dur = _routeCache.TryGetValue(mode, out cached) && cached.Count > 0 ? ShortDuration(cached[0].DurationSeconds) : "";
 
+                // icon and duration side by side: one 32 px row instead of two
                 var icon = new Path
                 {
                     Data = PathDataConverter.Parse(ManeuverIcons.ForMode(mode)),
-                    Width = 22,
-                    Height = 22,
+                    Width = 18,
+                    Height = 18,
                     Stretch = Stretch.Uniform,
                     Fill = ThemeBrush(sel ? "OnPrimaryContainerBrush" : "OnSurfaceVariantBrush"),
-                    HorizontalAlignment = HorizontalAlignment.Center
+                    VerticalAlignment = VerticalAlignment.Center
                 };
                 var text = new TextBlock
                 {
-                    Text = dur.Length > 0 ? dur : Modes[i][1],
-                    FontSize = 11,
+                    Text = dur,
+                    FontSize = 12,
                     FontFamily = (FontFamily)Application.Current.Resources["AppFontMedium"],
                     Foreground = ThemeBrush(sel ? "OnPrimaryContainerBrush" : "OnSurfaceVariantBrush"),
-                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
                     TextTrimming = TextTrimming.CharacterEllipsis,
-                    Margin = new Thickness(0, 2, 0, 0)
+                    Margin = new Thickness(4, 0, 0, 1),
+                    Visibility = Visibility.Collapsed   // tabs show the vehicle icon only
                 };
-                var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+                var stack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
                 stack.Children.Add(icon);
                 stack.Children.Add(text);
+                // fixed-size pill centred in its column (Button defaults to HorizontalAlignment.Left on WP8.1)
                 var pill = new Border
                 {
-                    CornerRadius = new CornerRadius(14),
-                    Background = sel ? ThemeBrush("PrimaryContainerBrush") : null,
-                    Margin = new Thickness(2, 0, 2, 0),
+                    Width = 60,
+                    Height = 32,
+                    CornerRadius = new CornerRadius(16),
+                    Background = sel ? ThemeBrush("PrimaryContainerBrush") : new SolidColorBrush(Windows.UI.Colors.Transparent),
                     Child = stack
                 };
-                var b = new Button { Style = (Style)Resources["BareButton"], Content = pill, Tag = mode };
+                var b = new Button
+                {
+                    Style = (Style)Resources["BareButton"],
+                    Content = pill,
+                    Tag = mode,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
                 b.Click += ModeTab_Click;
                 Grid.SetColumn(b, i);
                 ModeTabsPanel.Children.Add(b);
             }
         }
 
-        /// <summary>"25 ph", "1 g 20" – fits under the mode icons.</summary>
+        /// <summary>"25 ph", "1 g 20" – fits next to the mode icons.</summary>
         private static string ShortDuration(int seconds)
         {
             int min = Math.Max(1, (int)Math.Round(seconds / 60.0));
-            if (min < 60) return min + " phút";
+            if (min < 60) return min + " ph";
             int h = min / 60, m = min % 60;
             if (h >= 24) return (h / 24) + " ngày";
             return m == 0 ? h + " giờ" : h + " g " + m;
@@ -237,7 +248,7 @@ namespace GGMaps
             DirDurationText.Foreground = sel.DurationBrush;
             DirDistanceText.Text = sel.IsTransit ? "" : "(" + sel.DistanceText + ")";
             string sub = sel.Subtitle;
-            if (!string.IsNullOrEmpty(sel.ViaText)) sub = sub.Length > 0 ? sub + "\n" + sel.ViaText : sel.ViaText;
+            if (!string.IsNullOrEmpty(sel.ViaText)) sub = sub.Length > 0 ? sub + " · " + sel.ViaText : sel.ViaText;
             DirSubtitleText.Text = sub;
             DirSubtitleText.Visibility = sub.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
             DirWarningText.Text = string.Join("\n", sel.Warnings);
